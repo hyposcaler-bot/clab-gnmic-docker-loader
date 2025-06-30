@@ -1,0 +1,36 @@
+name: gnmic-docker-loader
+prefix: ""
+mgmt:
+  network: gnmic_mgmt
+  ipv4-subnet: 172.21.21.0/24
+topology:
+  nodes:
+    srl01:
+      kind: nokia_srlinux
+      mgmt-ipv4: 172.21.21.10
+      image: ghcr.io/nokia/srlinux:24.10.2
+    ceos01:
+      kind: arista_ceos
+      mgmt-ipv4: 172.21.21.11
+      image: ceos:4.34.1F
+    gnmic:
+      kind: linux
+      mgmt-ipv4: 172.21.21.200
+      image: ghcr.io/openconfig/gnmic:0.41.0
+      binds:
+        - configs/gnmic/gnmic-config.yml:/gnmic-config.yml:ro
+        - /var/run/docker.sock:/var/run/docker.sock
+      cmd: --config /gnmic-config.yml --log subscribe
+      group: "10"
+    prometheus:
+      kind: linux
+      mgmt-ipv4: 172.21.21.201
+      image: quay.io/prometheus/prometheus:v2.54.1
+      binds:
+        - configs/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      cmd: --config.file=/etc/prometheus/prometheus.yml
+      ports:
+        - 9090:9090
+      group: "10"
+  links:
+    - endpoints: ["srl01:ethernet-1/1", "ceos01:eth1"]

@@ -1,0 +1,45 @@
+username: admin
+timeout: 10s
+
+loader:
+  type: docker
+  filters:
+    - containers:
+      - label=clab-node-kind: nokia_srlinux
+        label=containerlab: gnmic-docker-loader
+      config:
+        skip-verify: true
+        insecure: false
+        password: NokiaSrl1!
+        subscriptions:
+          - srl-if-stats-errors
+    - containers:
+      - label=clab-node-kind: arista_ceos
+        label=containerlab: gnmic-docker-loader
+      port: "6030"
+      config:
+        skip-verify: false
+        insecure: true
+        password: admin
+        subscriptions:
+          - eos-if-counters-errors
+
+subscriptions:
+  srl-if-stats-errors:
+    mode: stream
+    stream-mode: sample
+    sample-interval: 5s
+    paths:
+      - /interface[name=ethernet-1/1]/statistics/in-fcs-error-packets
+  eos-if-counters-errors:
+    mode: stream
+    stream-mode: sample
+    sample-interval: 5s
+    paths:
+      - /interfaces/interface[name=Ethernet1]/state/counters/in-errors
+
+outputs:
+  prom-output:
+    type: prometheus
+    listen: :9273
+
